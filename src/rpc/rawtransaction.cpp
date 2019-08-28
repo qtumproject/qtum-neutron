@@ -39,6 +39,8 @@
 
 #include <univalue.h>
 
+#include <neutron/universaladdr.h>
+
 
 static void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
 {
@@ -216,6 +218,59 @@ static UniValue fromhexaddress(const JSONRPCRequest& request) {
     raw.SetReverseHex(request.params[0].get_str());
     CTxDestination dest(raw);
 
+    return EncodeDestination(dest);
+}
+
+static UniValue touniversal(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+                RPCHelpMan{"touniversal",
+                           "\nConverts a base58 encoded address to a universal hex address for use in smart contracts.\n",
+                           {
+                                   {"address", RPCArg::Type::STR_HEX, RPCArg::Optional::NO,  "The base58 address"},
+                           },
+                           RPCResult{
+                                   "\"universaladdr\"      (string) The universal hex address for use in smart contracts\n"
+                           },
+                           RPCExamples{
+                                   HelpExampleCli("touniversal", "\"address\"")
+                                   + HelpExampleRpc("touniversal", "\"address\"")
+                           },
+                }.ToString()
+        );
+
+    CTxDestination dest = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(dest)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address");
+    }
+
+    return DestinationToUniversal(dest).getHex();
+}
+
+static UniValue fromuniversal(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+                RPCHelpMan{"fromuniversal",
+                           "\nConverts a universal hex address to a base58 address\n",
+                           {
+                                   {"fromuniversal", RPCArg::Type::STR_HEX, RPCArg::Optional::NO,  "The universal hex address"},
+                           },
+                           RPCResult{
+                                   "\"address\"      (string) The base58 encoded address\n"
+                           },
+                           RPCExamples{
+                                   HelpExampleCli("fromuniversal", "\"hexaddress\"")
+                                   + HelpExampleRpc("fromuniversal", "\"hexaddress\"")
+                           },
+                }.ToString()
+        );
+
+    UniversalAddress uaddr;
+    if (uaddr.setHex(request.params[0].get_str()) != 0) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid universal address");
+    }
+
+    CTxDestination dest = UniversalToDestination(uaddr);
     return EncodeDestination(dest);
 }
 
@@ -2346,6 +2401,8 @@ static const CRPCCommand commands[] =
     { "rawtransactions",    "analyzepsbt",                  &analyzepsbt,               {"psbt"} },
     { "rawtransactions",    "gethexaddress",                &gethexaddress,             {"address",} },
     { "rawtransactions",    "fromhexaddress",               &fromhexaddress,            {"hexaddress",} },
+    { "rawtransactions",    "touniversal",                  &touniversal,               {"address",} },
+    { "rawtransactions",    "fromuniversal",                &fromuniversal,             {"hexaddress",} },
 
     { "blockchain",         "gettxoutproof",                &gettxoutproof,             {"txids", "blockhash"} },
     { "blockchain",         "verifytxoutproof",             &verifytxoutproof,          {"proof"} },
