@@ -11,7 +11,7 @@
 #include <compat/endian.h>
 
 UniversalAddress::UniversalAddress():
-    m_version(INVALID), m_data{0}
+    m_version(UNKNOWN), m_data{0}
 {
 }
 
@@ -90,15 +90,22 @@ int UniversalAddress::setHex(const char *psz) {
     switch (version) {
         case P2PKH:
         case P2SH:
-        case TESTVM:
+        case NTVM:
+        case P2WPKH:
         {
-            // hash160 size mismatch
+            // size mismatch
             if (dataSize != 20) return -2;
             break;
         }
+        case P2WSH:
+        {
+            // size mismatch
+            if (dataSize != 32) return -3;
+            break;
+        }
         default:
-            // invalid or unknown version
-            return -3;
+            // unknown or unsupported version
+            return -4;
     }
 
     setVersion(Version(version));
@@ -149,14 +156,14 @@ public:
     UniversalAddress operator()(const WitnessV0KeyHash& id) const {
         std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::INVALID, data);
+        UniversalAddress addr(UniversalAddress::P2WPKH, data);
         return addr;
     }
 
     UniversalAddress operator()(const WitnessV0ScriptHash& id) const {
         std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::INVALID, data);
+        UniversalAddress addr(UniversalAddress::P2WSH, data);
         return addr;
     }
 
@@ -178,18 +185,41 @@ CTxDestination UniversalToDestination(const UniversalAddress& ua) {
         case UniversalAddress::P2PKH:
         {
             uint160 hash;
-            std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-            return CKeyID(hash);
+            if (hash.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
+                return CKeyID(hash);
+            }
+            break;
         }
         case UniversalAddress::P2SH:
         {
             uint160 hash;
-            std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-            return CScriptID(hash);
+            if (hash.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
+                return CScriptID(hash);
+            }
+            break;
+        }
+        case UniversalAddress::P2WPKH:
+        {
+            WitnessV0KeyHash keyid;
+            if (keyid.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), keyid.begin());
+                return keyid;
+            }
+            break;
+        }
+        case UniversalAddress::P2WSH:
+        {
+            WitnessV0ScriptHash keyid;
+            if (keyid.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), keyid.begin());
+                return keyid;
+            }
+            break;
         }
         default:
-        {
-            return CNoDestination();
-        }
+            break;
     }
+    return CNoDestination();
 }

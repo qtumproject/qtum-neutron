@@ -11,10 +11,16 @@
 class UniversalAddress {
 public:
     enum Version: uint16_t {
-        INVALID= 0x0000,
-        P2PKH,  // pay to pubkey hash
-        P2SH,   // pay to script hash
-        TESTVM  // Neutron Test VM
+        UNKNOWN         = 0x0000,
+        P2PKH           = 0x0001,   // pay to pubkey hash
+        P2SH            = 0x0002,   // pay to script hash
+        P2WPKH          = 0x0003,   // pay to witness pubkey hash
+        P2WSH           = 0x0004,   // pay to witness script hash
+        NONSTANDARD     = 0x0005,   // non-standard
+        LEVM            = 0x4001,   // legacy EVM
+        NEVM            = 0x8002,   // Neutron EVM
+        NX86            = 0x8003,   // Neutron X86
+        NTVM            = 0x8004    // Neutron Test VM
     };
 
     UniversalAddress();
