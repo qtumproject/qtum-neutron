@@ -18,22 +18,22 @@ public:
     };
 
     UniversalAddress();
-    UniversalAddress(Version version, const uint8_t *data, uint32_t size);
+    UniversalAddress(Version version, std::vector<unsigned char> data);
+    UniversalAddress(Version version, const unsigned char *data, size_t size);
     UniversalAddress(const UniversalAddress &another);
 
     ~UniversalAddress() {
-        if (m_data) free(m_data);
     }
 
     UniversalAddress& operator = (const UniversalAddress &another);
     bool operator == (const UniversalAddress &another);
 
-    inline Version version() const      { return m_version; }
-    inline uint32_t dataSize() const    { return m_data_size; }
-    inline const uint8_t *data() const  { return m_data; }
+    inline Version version() const                          { return m_version; }
+    inline const std::vector<unsigned char>& data() const   { return m_data; };
 
-    inline void setVersion(Version version) { m_version = version; }
-    void setData(const uint8_t *data, uint32_t size);
+    inline void setVersion(Version version)         { m_version = version; }
+    void setData(const std::vector<unsigned char> &data);
+    void setData(const unsigned char *data, size_t size);
     int setHex(const char* psz);
     int setHex(const std::string &str);
 
@@ -41,8 +41,7 @@ public:
 
 private:
     Version m_version;
-    uint32_t m_data_size;
-    uint8_t *m_data;
+    std::vector<unsigned char> m_data;
 };
 
 UniversalAddress DestinationToUniversal(const CTxDestination& dest);

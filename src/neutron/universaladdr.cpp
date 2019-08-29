@@ -11,65 +11,45 @@
 #include <compat/endian.h>
 
 UniversalAddress::UniversalAddress():
-    m_version(INVALID),
-    m_data_size(0),
-    m_data(nullptr)
+    m_version(INVALID), m_data{0}
 {
-
 }
 
-UniversalAddress::UniversalAddress(Version version, const uint8_t *data, uint32_t size):
-    m_version(version),
-    m_data_size(size),
-    m_data(nullptr)
+UniversalAddress::UniversalAddress(UniversalAddress::Version version, std::vector<unsigned char> data):
+    m_version(version), m_data(std::move(data))
 {
-    if (size > 0 && data != nullptr) {
-        m_data = (uint8_t *)malloc(size);
-        memcpy(m_data, data, size);
-    }
+}
+
+UniversalAddress::UniversalAddress(Version version, const unsigned char *data, size_t size):
+    m_version(version)
+{
+    setData(data, size);
 }
 
 UniversalAddress::UniversalAddress(const UniversalAddress &another) {
     m_version = another.m_version;
-    if (another.m_data_size > 0 && another.m_data != nullptr) {
-        m_data_size = another.m_data_size;
-        m_data = (uint8_t *)malloc(m_data_size);
-        memcpy(m_data, another.m_data, m_data_size);
-    } else {
-        m_data = nullptr;
-        m_data_size = 0;
-    }
+    m_data = another.m_data;
 }
 
 UniversalAddress& UniversalAddress::operator=(const UniversalAddress &another) {
     if (this != &another) {
         m_version = another.m_version;
-        setData(another.m_data, another.m_data_size);
+        m_data = another.m_data;
     }
     return *this;
 }
 
 bool UniversalAddress::operator==(const UniversalAddress &another) {
-    return (m_version == another.m_version
-    && m_data_size == another.m_data_size
-    && memcmp(m_data, another.m_data, m_data_size) == 0);
+    return (m_version == another.m_version && m_data == another.m_data);
 }
 
-void UniversalAddress::setData(const uint8_t *data, uint32_t size) {
-    if (size == 0) {
-        m_data_size = 0;
-        if (m_data != nullptr) free(m_data);
-        m_data = nullptr;
-        return;
-    }
-    if (m_data_size == size && m_data != nullptr) {
-        memcpy(m_data, data, size);
-    } else {
-        if (m_data != nullptr) free(m_data);
-        m_data = (uint8_t *)malloc(size);
-        memcpy(m_data, data, size);
-        m_data_size = size;
-    }
+void UniversalAddress::setData(const std::vector<unsigned char> &data) {
+    m_data = data;
+}
+
+void UniversalAddress::setData(const unsigned char *data, size_t size) {
+    m_data.clear();
+    m_data.insert(m_data.end(), data, data + size);
 }
 
 int UniversalAddress::setHex(const char *psz) {
@@ -87,7 +67,7 @@ int UniversalAddress::setHex(const char *psz) {
         psz++;
     psz--;
 
-    std::vector<uint8_t> data;
+    std::vector<unsigned char> data;
     while (psz >= pbegin) {
         auto p = ::HexDigit(*psz--);
         if (psz >= pbegin) {
@@ -122,7 +102,7 @@ int UniversalAddress::setHex(const char *psz) {
     }
 
     setVersion(Version(version));
-    setData(data.data() + 2, data.size() - 2);
+    setData(data.data() + 2, dataSize);
     return 0;
 }
 
@@ -131,7 +111,7 @@ int UniversalAddress::setHex(const std::string &str) {
 }
 
 std::string UniversalAddress::getHex() {
-    if (m_data_size == 0 || m_data == nullptr) {
+    if (m_data.empty()) {
         return "";
     }
     std::stringstream hex;
@@ -141,8 +121,8 @@ std::string UniversalAddress::getHex() {
     hex << std::setw(2) << static_cast<unsigned>(version & 0xff);
     hex << std::setw(2) << static_cast<unsigned>(version >> 8);
 
-    for (size_t i=0; i < m_data_size; i++) {
-        hex << std::setw(2) << static_cast<unsigned>(m_data[i]);
+    for (unsigned char i: m_data) {
+        hex << std::setw(2) << static_cast<unsigned>(i);
     }
 
     return hex.str();
@@ -153,30 +133,30 @@ class DestinationConverter : public boost::static_visitor<UniversalAddress>
 
 public:
     UniversalAddress operator()(const CKeyID& id) const {
-        std::vector<uint8_t> data;
+        std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::P2PKH, data.data(), (uint32_t)id.size());
+        UniversalAddress addr(UniversalAddress::P2PKH, data);
         return addr;
     }
 
     UniversalAddress operator()(const CScriptID& id) const {
-        std::vector<uint8_t> data;
+        std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::P2SH, data.data(), (uint32_t)id.size());
+        UniversalAddress addr(UniversalAddress::P2SH, data);
         return addr;
     }
 
     UniversalAddress operator()(const WitnessV0KeyHash& id) const {
-        std::vector<uint8_t> data;
+        std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::INVALID, data.data(), (uint32_t)id.size());
+        UniversalAddress addr(UniversalAddress::INVALID, data);
         return addr;
     }
 
     UniversalAddress operator()(const WitnessV0ScriptHash& id) const {
-        std::vector<uint8_t> data;
+        std::vector<unsigned char> data;
         data.insert(data.end(), id.begin(), id.end());
-        UniversalAddress addr(UniversalAddress::INVALID, data.data(), (uint32_t)id.size());
+        UniversalAddress addr(UniversalAddress::INVALID, data);
         return addr;
     }
 
@@ -198,13 +178,13 @@ CTxDestination UniversalToDestination(const UniversalAddress& ua) {
         case UniversalAddress::P2PKH:
         {
             uint160 hash;
-            std::copy(ua.data(), ua.data() + ua.dataSize(), hash.begin());
+            std::copy(ua.data().begin(), ua.data().end(), hash.begin());
             return CKeyID(hash);
         }
         case UniversalAddress::P2SH:
         {
             uint160 hash;
-            std::copy(ua.data(), ua.data() + ua.dataSize(), hash.begin());
+            std::copy(ua.data().begin(), ua.data().end(), hash.begin());
             return CScriptID(hash);
         }
         default:
