@@ -9,6 +9,8 @@
 #include <key.h>
 #include <iomanip>
 #include <compat/endian.h>
+#include <chainparams.h>
+
 
 UniversalAddress::UniversalAddress():
     m_version(UNKNOWN), m_data{0}
@@ -90,22 +92,29 @@ int UniversalAddress::setHex(const char *psz) {
     switch (version) {
         case P2PKH:
         case P2SH:
-        case NTVM:
         case P2WPKH:
         {
             // size mismatch
-            if (dataSize != 20) return -2;
-            break;
+            if (dataSize == 20) break;
+            return -2;
         }
         case P2WSH:
         {
             // size mismatch
-            if (dataSize != 32) return -3;
-            break;
+            if (dataSize == 32) break;
+            return -3;
+        }
+        case NTVM:
+        {
+            // neutron test vm is valid in regtest only
+            if (Params().NetworkIDString() == CBaseChainParams::REGTEST && dataSize == 20) {
+                break;
+            }
+            return -4;
         }
         default:
             // unknown or unsupported version
-            return -4;
+            return -5;
     }
 
     setVersion(Version(version));
