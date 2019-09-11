@@ -107,7 +107,7 @@ int UniversalAddress::setHex(const char *psz) {
         case NTVM:
         {
             // neutron test vm is valid in regtest only
-            if (Params().NetworkIDString() == CBaseChainParams::REGTEST && dataSize == 20) {
+            if (Params().MineBlocksOnDemand() && dataSize == 20) {
                 break;
             }
             return -4;
