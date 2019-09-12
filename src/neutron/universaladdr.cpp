@@ -93,6 +93,7 @@ int UniversalAddress::setHex(const char *psz) {
         case P2PKH:
         case P2SH:
         case P2WPKH:
+        case NX86:
         {
             // size mismatch
             if (dataSize == 20) break;
@@ -180,6 +181,20 @@ public:
         return UniversalAddress();
     }
 
+    UniversalAddress operator()(const X86VMID& id) const {
+        std::vector<unsigned char> data;
+        data.insert(data.end(), id.begin(), id.end());
+        UniversalAddress addr(UniversalAddress::NX86, data);
+        return addr;
+    }
+
+    UniversalAddress operator()(const TestVMID& id) const {
+        std::vector<unsigned char> data;
+        data.insert(data.end(), id.begin(), id.end());
+        UniversalAddress addr(UniversalAddress::NTVM, data);
+        return addr;
+    }
+
     UniversalAddress operator()(const CNoDestination& no) const {
         return UniversalAddress();
     }
@@ -224,6 +239,24 @@ CTxDestination UniversalToDestination(const UniversalAddress& ua) {
             if (keyid.size() == ua.data().size()) {
                 std::copy(ua.data().begin(), ua.data().end(), keyid.begin());
                 return keyid;
+            }
+            break;
+        }
+        case UniversalAddress::NX86:
+        {
+            uint160 hash;
+            if (hash.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
+                return X86VMID(hash);
+            }
+            break;
+        }
+        case UniversalAddress::NTVM:
+        {
+            uint160 hash;
+            if (hash.size() == ua.data().size()) {
+                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
+                return TestVMID(hash);
             }
             break;
         }

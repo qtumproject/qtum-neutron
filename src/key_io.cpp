@@ -67,6 +67,24 @@ public:
         return bech32::Encode(m_params.Bech32HRP(), data);
     }
 
+    std::string operator()(const X86VMID& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::X86VM_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const TestVMID& id) const
+    {
+        if (m_params.MineBlocksOnDemand()) {
+            // regtest only
+            std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::TESTVM_ADDRESS);
+            data.insert(data.end(), id.begin(), id.end());
+            return EncodeBase58Check(data);
+        }
+        return {};
+    }
+
     std::string operator()(const CNoDestination& no) const { return {}; }
 };
 
@@ -89,6 +107,22 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
         if (data.size() == hash.size() + script_prefix.size() && std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) {
             std::copy(data.begin() + script_prefix.size(), data.end(), hash.begin());
             return CScriptID(hash);
+        }
+
+        // X86 VM
+        const std::vector<unsigned char>& x86vm_prefix = params.Base58Prefix(CChainParams::X86VM_ADDRESS);
+        if (data.size() == hash.size() + x86vm_prefix.size() && std::equal(x86vm_prefix.begin(), x86vm_prefix.end(), data.begin())) {
+            std::copy(data.begin() + x86vm_prefix.size(), data.end(), hash.begin());
+            return X86VMID(hash);
+        }
+
+        // Test VM (regtest only)
+        if (params.MineBlocksOnDemand()) {
+            const std::vector<unsigned char>& testvm_prefix = params.Base58Prefix(CChainParams::TESTVM_ADDRESS);
+            if (data.size() == hash.size() + testvm_prefix.size() && std::equal(testvm_prefix.begin(), testvm_prefix.end(), data.begin())) {
+                std::copy(data.begin() + testvm_prefix.size(), data.end(), hash.begin());
+                return TestVMID(hash);
+            }
         }
     }
     data.clear();

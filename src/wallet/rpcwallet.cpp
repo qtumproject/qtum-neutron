@@ -4341,6 +4341,11 @@ public:
     }
 
     UniValue operator()(const WitnessUnknown& id) const { return UniValue(UniValue::VOBJ); }
+
+    // no description for Neutron VMs
+    UniValue operator()(const X86VMID& dest) const { return UniValue(UniValue::VOBJ); }
+    UniValue operator()(const TestVMID& dest) const { return UniValue(UniValue::VOBJ); }
+
 };
 
 static UniValue DescribeWalletAddress(CWallet* pwallet, const CTxDestination& dest)

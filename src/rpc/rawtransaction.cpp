@@ -240,7 +240,8 @@ static UniValue touniversal(const JSONRPCRequest& request) {
         );
 
     CTxDestination dest = DecodeDestination(request.params[0].get_str());
-    if (!IsValidDestination(dest)) {
+
+    if (!IsNeutronContractAddress(dest) && !IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address");
     }
 
@@ -271,7 +272,7 @@ static UniValue fromuniversal(const JSONRPCRequest& request) {
     }
 
     CTxDestination dest = UniversalToDestination(uaddr);
-    if (!IsValidDestination(dest)) {
+    if (!IsNeutronContractAddress(dest) && !IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid universal address");
     }
     return EncodeDestination(dest);
