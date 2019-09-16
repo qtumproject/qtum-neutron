@@ -65,8 +65,15 @@ int UniversalAddress::setHex(const char *psz) {
 
     // hex string to uint
     const char* pbegin = psz;
-    while (::HexDigit(*psz) != -1)
-        psz++;
+    while (true) {
+        if ((::HexDigit(*psz) != -1)) {
+            psz++;
+            continue;
+        }
+        // the last non-hex char of psz should be '\x00'
+        if ((*psz) == '\x00') break;
+        return -1;
+    }
     psz--;
 
     std::vector<unsigned char> data;
