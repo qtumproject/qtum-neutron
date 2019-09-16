@@ -47,6 +47,27 @@ VALID_DATA = [
     ["qcrt1qstwq53xtgrz4rfxzl8f3teduf4gnhh3rphqvup4cs4vxtwcz92cs80ad95", "040082dc0a44cb40c551a4c2f9d315e5bc4d513bde230dc0ce06b8855865bb022ab1"],
     ["qcrt1q3nxqag3hpqzwq7z4lgam2wlq3vrk5tu84cw4pr2l62hp5rls2vlsy9c5jd", "04008ccc0ea2370804e07855fa3bb53be08b076a2f87ae1d508d5fd2ae1a0ff0533f"],
     ["qcrt1qw7r36x7a92umnfz23rqtrr4mfzgkr2axqga78w5hqvmy4h6jfvqqymclzr", "040077871d1bdd2ab9b9a44a88c0b18ebb489161aba6023be3ba9703364adf524b00"],
+    ["xGxHtfMCNZ7BKpycd9aEMHvjXvfDpV4ks3", "03805ee01d53d27bda04da032fdd4ee5f3460943c22e"],
+    ["xGrhNDwDtE9VS2T7n67Ve9dfu4UpBnUq1N", "03805dd13703e37944da8a29c886ece68244cf8d6968"],
+    ["xU4svMg7dxdXdBxRYkZ6dYtVGDw5MENGGM", "0380d8c8666e6b5950508cdf6865bf51e9d8e1c6a69a"],
+    ["xUceprAZSiaywUYohY8n6gAGuhg3B1ZEMH", "0380decac79e749661e19924528910326a6bf8420844"],
+    ["xUzkYaR6UTH9r91vYTjntWTAEriz9M9gz5", "0380e2f8b48d657fe14bcb890cdd5b13754a28bd2b68"],
+    ["xRq9zv5zoDgn411znuKVKhjySWzGinTrgn", "0380c03fbf303739fc8bf943e9591514b7866999a1a6"],
+    ["xW5Y1h3CiRxBmk4tjsKJ1jZNcQXZYdpTqS", "0380eed87302a8d1e89c16067f515011b084897d69b6"],
+    ["xHMEbfDez5tc5Gn1ou4e8VivBHM46HMZ24", "03806336eec5be992b75f18120a3b5b5ca8f158a721d"],
+    ["xNPGdZ8QXGtXwpeGRUuRdM2b7C4uAGc5i5", "03809a7217204dbb1d409543d6326529123efd37b859"],
+    ["xNDbhVsiWxsdzQfb9q1Bbe3S5hU4NSLtcs", "0380989dd90ed02ad7dc699720c84457363024356f3c"],
+    ["tA3fKfyrybfs9nEtMmNWLz5191s7WXrgXK", "0480223e059d32c089a1083950926099b79b6a8017a3"],
+    ["tERiuwecaMbL4ieoXwdUhVkzVE5yG893mg", "0480524aac79611328a62661615a97dc8c57fcf29c3c"],
+    ["tUNLaRFSgP7Jr4fotNuhfuXmpMwcNfxJbR", "0480eb388a88340861bbe2d1b54757c9caea7053c54a"],
+    ["tB948vk8XnfSrxJWFgBKS7FWrwMwDBmF5b", "04802e3b45b5a6529515850bbf1b2815aea36eca700a"],
+    ["tQu7j4FVtvUJU2fRaGeY3WUrfjxQy5zYfK", "0480c52a348dc57d59a463a96193d0548242fd9f693a"],
+    ["t7WkBS7Z7nUAB1yq9sysmxC2GCwxmskR3C", "04800674ee460fad03d31b437fedaf42716096161d01"],
+    ["tPVVbhdUczfa6Lk3W5n89DMBkagNmWDAjw", "0480b5ba5af08d91362d510eadc6d36c971425c29b36"],
+    ["tW9WSfskdXYaME2TMQuy2YLbab5qiuTArg", "0480febb9f0be1ae5ed839cd42d21a9054eb831e5437"],
+    ["tPhRwMuyzfrZiGcrjvkS5Ub4RE5aSxUnaq", "0480b7fc4a6b2eb956716a950f4443a5458555c76f3c"],
+    ["tVNnwt8c9HrE63mhhacDUtJ7k4v4e6W4w2", "0480f646adf67a051e6f15a284bcf549bc74de322345"],
+    ["tVNnwt8c9HrE63mhhacDUtJ7k4v4e6W4w2", "0480f646adf67a051e6f15a284bcf549bc74de322345"],
 ]
 
 INVALID_ADDRESS = [
@@ -60,6 +81,9 @@ INVALID_ADDRESS = [
     "qcrt1qw7r36x7a92umnfz23rqtrr4mfzgkr2axqga78w5hqvmy4h6jfvqqymcl",
     "qcrt1qstwq53xtgrz4rfxzl7f3teduf4gnhh3rphqvup4cs4vxtwcz92cs80ad95",
     "bcrt1qwpy83e03s0n84d7e7l9uak80eneaguanrk9rra8x0x6fq26gp2fsskraxy",
+    "xNPGdZ8QXGtXwpeGRUuRdM2b7C4uAGc5i6",
+    "tQu7j4FVtvUJU2fRaGeY3WUrfjxQy5zYfl",
+    "tA3fKfyrybfs9nEtMmNWLz5191s7WXrgXK1",
 ]
 
 INVALID_UNIVERSAL = [
@@ -79,6 +103,11 @@ INVALID_UNIVERSAL = [
     "0300f8050a633ef61e7f652e655f749548d27da4e809gg",
     "030077871d1bdd2ab9b9a44a88c0b18ebb489161aba6023be3ba9703364adf524b00",
     "0400f8050a633ef61e7f652e655f749548d27da4e809",
+    "0380989dd90ed02ad7dc699720c84457363024356f3cd",
+    "0480f646adf67a051e6f15a284bcf549bc74de3223",
+    "0480f646adf67a051e6f15a284bcf549bc74de32234g",
+    "0480f646adf67a051e6f15a284bcf549bc74de32234500",
+    "0481f646adf67a051e6f15a284bcf549bc74de322345",
 ]
 
 class UniversalAddressTest(BitcoinTestFramework):
