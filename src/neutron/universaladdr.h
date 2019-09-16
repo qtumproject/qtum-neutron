@@ -52,6 +52,13 @@ private:
 
 UniversalAddress DestinationToUniversal(const CTxDestination& dest);
 
-CTxDestination UniversalToDestination(const UniversalAddress& ua);
+CTxDestination UniversalToDestination(const UniversalAddress& uaddr);
+
+bool IsValidUniversalAddress(const UniversalAddress& uaddr);
+
+bool IsContractUniversalAddress(const UniversalAddress& uaddr);
+
+// read base58/bech32/hex string, convert to UniversalAddress
+bool ReadUniversalAddress(const std::string& str, UniversalAddress& uaddr);
 
 #endif //QTUM_NEUTRON_UNIVERSALADDR_H

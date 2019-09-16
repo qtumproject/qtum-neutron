@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <compat/endian.h>
 #include <chainparams.h>
-
+#include <key_io.h>
 
 UniversalAddress::UniversalAddress():
     m_version(UNKNOWN), m_data{0}
@@ -271,4 +271,23 @@ CTxDestination UniversalToDestination(const UniversalAddress& ua) {
             break;
     }
     return CNoDestination();
+}
+
+bool IsValidUniversalAddress(const UniversalAddress& uaddr) {
+    return uaddr.version() != UniversalAddress::UNKNOWN && !uaddr.data().empty();
+}
+
+bool IsContractUniversalAddress(const UniversalAddress& uaddr) {
+    return uaddr.version() == UniversalAddress::NX86 || uaddr.version() == UniversalAddress::NTVM;
+}
+
+bool ReadUniversalAddress(const std::string& str, UniversalAddress& uaddr) {
+    // check base58/bech32
+    CTxDestination dest = DecodeDestination(str);
+    if (dest.which() != 0) {
+        uaddr = DestinationToUniversal(dest);
+        return IsValidUniversalAddress(uaddr);
+    }
+    // check universal hex
+    return uaddr.setHex(str) == 0;
 }
