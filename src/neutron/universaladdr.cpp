@@ -212,31 +212,23 @@ UniversalAddress DestinationToUniversal(const CTxDestination& dest) {
 }
 
 CTxDestination UniversalToDestination(const UniversalAddress& ua) {
-    switch (ua.version()) {
+    UniversalAddress::Version version = ua.version();
+
+    switch (version) {
         case UniversalAddress::P2PKH:
-        {
-            uint160 hash;
-            if (hash.size() == ua.data().size()) {
-                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-                return CKeyID(hash);
-            }
-            break;
-        }
         case UniversalAddress::P2SH:
+        case UniversalAddress::P2WPKH:
+        case UniversalAddress::NX86:
+        case UniversalAddress::NTVM:
         {
             uint160 hash;
             if (hash.size() == ua.data().size()) {
                 std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-                return CScriptID(hash);
-            }
-            break;
-        }
-        case UniversalAddress::P2WPKH:
-        {
-            WitnessV0KeyHash keyid;
-            if (keyid.size() == ua.data().size()) {
-                std::copy(ua.data().begin(), ua.data().end(), keyid.begin());
-                return keyid;
+                if (version == UniversalAddress::P2PKH) return CKeyID(hash);
+                if (version == UniversalAddress::P2SH) return CScriptID(hash);
+                if (version == UniversalAddress::P2WPKH) return WitnessV0KeyHash(hash);
+                if (version == UniversalAddress::NX86) return X86VMID(hash);
+                if (Params().MineBlocksOnDemand()) return TestVMID(hash);
             }
             break;
         }
@@ -246,24 +238,6 @@ CTxDestination UniversalToDestination(const UniversalAddress& ua) {
             if (keyid.size() == ua.data().size()) {
                 std::copy(ua.data().begin(), ua.data().end(), keyid.begin());
                 return keyid;
-            }
-            break;
-        }
-        case UniversalAddress::NX86:
-        {
-            uint160 hash;
-            if (hash.size() == ua.data().size()) {
-                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-                return X86VMID(hash);
-            }
-            break;
-        }
-        case UniversalAddress::NTVM:
-        {
-            uint160 hash;
-            if (hash.size() == ua.data().size()) {
-                std::copy(ua.data().begin(), ua.data().end(), hash.begin());
-                return TestVMID(hash);
             }
             break;
         }
