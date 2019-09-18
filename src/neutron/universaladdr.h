@@ -7,6 +7,7 @@
 
 #include <string>
 #include <script/standard.h>
+#include <qtum/qtumtransaction.h>
 
 class UniversalAddress {
 public:
@@ -63,5 +64,7 @@ bool IsContractUniversalAddress(const UniversalAddress& uaddr);
 
 // read base58/bech32/hex string, convert to UniversalAddress
 bool ReadUniversalAddress(const std::string& str, UniversalAddress& uaddr);
+
+UniversalAddress::Version VersionVMToUniversalVersion(VersionVM& v);
 
 #endif //QTUM_NEUTRON_UNIVERSALADDR_H

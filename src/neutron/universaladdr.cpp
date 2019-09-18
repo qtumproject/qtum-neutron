@@ -272,3 +272,10 @@ bool ReadUniversalAddress(const std::string& str, UniversalAddress& uaddr) {
     // check universal hex
     return uaddr.setHex(str) == 0;
 }
+
+UniversalAddress::Version VersionVMToUniversalVersion(VersionVM& v) {
+    uint32_t raw = v.toRaw();
+    if (raw == VersionVM::GetNeutronX86Default().toRaw()) return UniversalAddress::Version::NX86;
+    if (raw == VersionVM::GetNeutronTestVMDefault().toRaw()) return UniversalAddress::Version::NTVM;
+    return UniversalAddress::Version::UNKNOWN;
+}
