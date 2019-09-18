@@ -57,6 +57,8 @@ CTxDestination UniversalToDestination(const UniversalAddress& uaddr);
 
 bool IsValidUniversalAddress(const UniversalAddress& uaddr);
 
+bool IsValidSenderUniversalAddress(const UniversalAddress& uaddr);
+
 bool IsContractUniversalAddress(const UniversalAddress& uaddr);
 
 // read base58/bech32/hex string, convert to UniversalAddress

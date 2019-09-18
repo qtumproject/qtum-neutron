@@ -254,6 +254,10 @@ bool IsValidUniversalAddress(const UniversalAddress& uaddr) {
     return uaddr.version() != UniversalAddress::UNKNOWN && !uaddr.data().empty();
 }
 
+bool IsValidSenderUniversalAddress(const UniversalAddress& uaddr) {
+    return IsValidUniversalAddress(uaddr) && !IsContractUniversalAddress(uaddr);
+}
+
 bool IsContractUniversalAddress(const UniversalAddress& uaddr) {
     return uaddr.version() == UniversalAddress::NX86 || uaddr.version() == UniversalAddress::NTVM;
 }
