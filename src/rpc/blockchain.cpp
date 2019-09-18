@@ -50,6 +50,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include <neutron/universaladdr.h>
+
 /* Calculate the difficulty for a given block index.
  */
 double GetDifficulty(const CBlockIndex* blockindex)
@@ -1278,6 +1280,101 @@ UniValue callcontract(const JSONRPCRequest& request)
     result.pushKV("executionResult", executionResultToJSON(execResults[0].execRes));
     result.pushKV("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec));
  
+    return result;
+}
+
+UniValue neutroncallcontract(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
+        throw std::runtime_error(
+                RPCHelpMan{"neutroncallcontract",
+                           "\nCall contract methods offline.\n",
+                           {
+                                   {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The contract address"},
+                                   {"data", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The data hex string"},
+                                   {"senderAddress", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "The sender address string"},
+                                   {"gasLimit", RPCArg::Type::NUM, RPCArg::Optional::OMITTED_NAMED_ARG, "The gas limit for executing the contract."},
+                           },
+                           RPCResult{
+                                   "{\n"
+                                   "  \"address\": \"contract address\",             (string)  address of the contract\n"
+                                   "  \"executionResult\": {                       (object)  method execution result\n"
+                                   "    \"gasUsed\": n,                            (numeric) gas used\n"
+                                   "    \"excepted\": \"exception\",                 (string)  thrown exception\n"
+                                   "    \"newAddress\": \"contract address\",        (string)  new address of the contract\n"
+                                   "    \"output\": \"data\",                        (string)  returned data from the method\n"
+                                   "    \"codeDeposit\": n,                        (numeric) code deposit\n"
+                                   "    \"gasRefunded\": n,                        (numeric) gas refunded\n"
+                                   "    \"depositSize\": n,                        (numeric) deposit size\n"
+                                   "    \"gasForDeposit\": n                       (numeric) gas for deposit\n"
+                                   "  },\n"
+                                   "  \"transactionReceipt\": {                    (object)  transaction receipt\n"
+                                   "    \"stateRoot\": \"hash\",                     (string)  state root hash\n"
+                                   "    \"gasUsed\": n,                            (numeric) gas used\n"
+                                   "    \"bloom\": \"bloom\",                        (string)  bloom\n"
+                                   "    \"log\": [                                 (array)  logs from the receipt\n"
+                                   "      {\n"
+                                   "        \"address\": \"address\",                (string)  contract address\n"
+                                   "        \"topics\":                            (array)  topics\n"
+                                   "        [\n"
+                                   "          \"topic\",                           (string)  topic\n"
+                                   "        ],\n"
+                                   "        \"data\": \"data\"                       (string)  logged data\n"
+                                   "      }\n"
+                                   "    ]\n"
+                                   "  }\n"
+                                   "}\n"
+                           },
+                           RPCExamples{
+                                   HelpExampleCli("neutroncallcontract", "0380eb23c0b3e6042821da281a2e2364feb22dd543e3 06fdde03")
+                                   + HelpExampleRpc("neutroncallcontract", "0380eb23c0b3e6042821da281a2e2364feb22dd543e3 06fdde03")
+                           },
+                }.ToString());
+
+    if (!Params().MineBlocksOnDemand())
+        throw std::runtime_error("neutroncallcontract for regression testing (-regtest mode) only");
+
+    LOCK(cs_main);
+
+    UniversalAddress contractAddress;
+    if (!ReadUniversalAddress(request.params[0].get_str(), contractAddress) || !IsContractUniversalAddress(contractAddress)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect contract address");
+    }
+
+    // todo: check if address exists
+//    dev::Address addrAccount(strAddr);
+//    if(!globalState->addressInUse(addrAccount))
+//        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
+
+    std::string data = request.params[1].get_str();
+    if(data.size() % 2 != 0 || !CheckHex(data))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
+
+    UniversalAddress senderAddress;
+    if(request.params.size() >= 3){
+        if (!ReadUniversalAddress(request.params[2].get_str(), senderAddress) || !IsValidUniversalAddress(senderAddress)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect sender address");
+        }
+    }
+
+    uint64_t gasLimit=0;
+    if(request.params.size() >= 4){
+        gasLimit = request.params[3].get_int64();
+    }
+
+    // todo get call result
+//    std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit);
+//
+//    if(fRecordLogOpcodes){
+//        writeVMlog(execResults);
+//    }
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("contract address", contractAddress.getHex());
+    result.pushKV("sender address", senderAddress.getHex());
+//    result.pushKV("executionResult", executionResultToJSON(execResults[0].execRes));
+//    result.pushKV("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec));
+
     return result;
 }
 
@@ -3352,6 +3449,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "scantxoutset",           &scantxoutset,           {"action", "scanobjects"} },
 
     { "blockchain",         "callcontract",           &callcontract,           {"address","data", "senderAddress", "gasLimit"} },
+    { "blockchain",         "neutroncallcontract",    &neutroncallcontract,    {"address","data", "senderAddress", "gasLimit"} },
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        {"blockhash"} },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        {"blockhash"} },
