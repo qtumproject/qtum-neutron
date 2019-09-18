@@ -119,6 +119,20 @@ struct WitnessUnknown
     }
 };
 
+// Qtum VMs
+
+struct X86VMID : public uint160 {
+    X86VMID() : uint160() {}
+    explicit X86VMID(const uint160& hash) : uint160(hash) {}
+    using uint160::uint160;
+};
+
+struct TestVMID : public uint160 {
+    TestVMID() : uint160() {}
+    explicit TestVMID(const uint160& hash) : uint160(hash) {}
+    using uint160::uint160;
+};
+
 /**
  * A txout script template with a specific destination. It is either:
  *  * CNoDestination: no destination set
@@ -127,15 +141,20 @@ struct WitnessUnknown
  *  * WitnessV0ScriptHash: TX_WITNESS_V0_SCRIPTHASH destination (P2WSH)
  *  * WitnessV0KeyHash: TX_WITNESS_V0_KEYHASH destination (P2WPKH)
  *  * WitnessUnknown: TX_WITNESS_UNKNOWN destination (P2W???)
+ *  * X86VMID: Neutron X86 VM destination, can be used in rpc neutroncreatecontract、neutroncallcontract、neutronsendtocontract
+ *  * TestVMID: Neutron Test VM destination, regtest only, can be used in rpc neutroncreatecontract、neutroncallcontract、neutronsendtocontract
  *  A CTxDestination is the internal data type encoded in a bitcoin address
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID, WitnessV0ScriptHash, WitnessV0KeyHash, WitnessUnknown> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, WitnessV0ScriptHash, WitnessV0KeyHash, WitnessUnknown, X86VMID, TestVMID> CTxDestination;
 
-/** Check whether a CTxDestination is a CNoDestination. */
+/** Check whether a CTxDestination is a CNoDestination or Neutron contract address. */
 bool IsValidDestination(const CTxDestination& dest);
 
 /** Check whether a CTxDestination can be used as contract sender address. */
 bool IsValidContractSenderAddress(const CTxDestination& dest);
+
+/** Check whether a CTxDestination is a Neutron VM base58 address. */
+bool IsNeutronContractAddress(const CTxDestination &dest);
 
 /** Get the name of a txnouttype as a C string, or nullptr if unknown. */
 const char* GetTxnOutputType(txnouttype t);
@@ -206,6 +225,8 @@ struct DataVisitor : public boost::static_visitor<valtype>
     valtype operator()(const WitnessV0ScriptHash& witnessScriptHash) const;
     valtype operator()(const WitnessV0KeyHash& witnessKeyHash) const;
     valtype operator()(const WitnessUnknown& witnessUnknown) const;
+    valtype operator()(const X86VMID& vmID) const;
+    valtype operator()(const TestVMID& vmID) const;
 };
 
 bool ExtractDestination(const COutPoint& prevout, const CScript& scriptPubKey, CTxDestination& addressRet, txnouttype* typeRet = NULL);

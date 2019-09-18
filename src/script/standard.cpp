@@ -405,6 +405,19 @@ public:
         *script << CScript::EncodeOP_N(id.version) << std::vector<unsigned char>(id.program, id.program + id.length);
         return true;
     }
+
+    // no script for Qtum VMs
+
+    bool operator()(const X86VMID &dest) const {
+        script->clear();
+        return false;
+    }
+
+    bool operator()(const TestVMID &dest) const {
+        script->clear();
+        return false;
+    }
+
 };
 } // namespace
 
@@ -445,13 +458,19 @@ CScript GetScriptForWitness(const CScript& redeemscript)
 }
 
 bool IsValidDestination(const CTxDestination& dest) {
-    return dest.which() != 0;
+    return dest.which() != 0 && !IsNeutronContractAddress(dest);
 }
 
 bool IsValidContractSenderAddress(const CTxDestination &dest)
 {
     const CKeyID *keyID = boost::get<CKeyID>(&dest);
     return keyID != 0;
+}
+
+bool IsNeutronContractAddress(const CTxDestination &dest) {
+    const X86VMID *x86ID = boost::get<X86VMID>(&dest);
+    const TestVMID *tvmID = boost::get<TestVMID>(&dest);
+    return x86ID != 0 || tvmID != 0;
 }
 
 #ifdef ENABLE_BITCORE_RPC
@@ -461,6 +480,8 @@ valtype DataVisitor::operator()(const CScriptID& scriptID) const { return valtyp
 valtype DataVisitor::operator()(const WitnessV0ScriptHash& witnessScriptHash) const { return valtype(witnessScriptHash.begin(), witnessScriptHash.end()); }
 valtype DataVisitor::operator()(const WitnessV0KeyHash& witnessKeyHash) const { return valtype(witnessKeyHash.begin(), witnessKeyHash.end()); }
 valtype DataVisitor::operator()(const WitnessUnknown&) const { return valtype(); }
+valtype DataVisitor::operator()(const X86VMID& vmID) const { return valtype(vmID.begin(), vmID.end()); }
+valtype DataVisitor::operator()(const TestVMID& vmID) const { return valtype(vmID.begin(), vmID.end()); }
 
 bool ExtractDestination(const COutPoint& prevout, const CScript& scriptPubKey, CTxDestination& addressRet, txnouttype* typeRet)
 {

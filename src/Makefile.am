@@ -235,7 +235,8 @@ BITCOIN_CORE_H = \
   qtum/qtumstate.h \
   qtum/qtumtransaction.h \
   qtum/qtumDGP.h \
-  qtum/storageresults.h
+  qtum/storageresults.h \
+  neutron/universaladdr.h
 
 
 obj/build.h: FORCE
@@ -470,6 +471,7 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   versionbitsinfo.cpp \
   warnings.cpp \
+  neutron/universaladdr.cpp \
   cpp-ethereum/libdevcore/Base64.cpp \
   cpp-ethereum/libdevcore/Base64.h \
   cpp-ethereum/libdevcore/Common.cpp \

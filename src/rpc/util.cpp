@@ -135,6 +135,16 @@ public:
         obj.pushKV("witness_program", HexStr(id.program, id.program + id.length));
         return obj;
     }
+
+    UniValue operator()(const X86VMID& dest) const
+    {
+        return UniValue(UniValue::VOBJ);
+    }
+
+    UniValue operator()(const TestVMID& dest) const
+    {
+        return UniValue(UniValue::VOBJ);
+    }
 };
 
 UniValue DescribeAddress(const CTxDestination& dest)

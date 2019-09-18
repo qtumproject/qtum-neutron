@@ -137,8 +137,10 @@ public:
         vSeeds.emplace_back("qtum6.dynu.net"); // Qtum mainnet
         vSeeds.emplace_back("qtum7.dynu.net"); // Qtum mainnet
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,58);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,50);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,58); // Q
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,50); // M
+        base58Prefixes[X86VM_ADDRESS]  = std::vector<unsigned char>(1,75); // X
+
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
@@ -246,8 +248,10 @@ public:
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("qtum4.dynu.net"); // Qtum testnet
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,120);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,110);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,120); // q
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,110); // m
+        base58Prefixes[X86VM_ADDRESS]  = std::vector<unsigned char>(1,137); // x
+
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
@@ -371,8 +375,11 @@ public:
         consensus.nFixUTXOCacheHFHeight=0;
         consensus.nEnableHeaderSignatureHeight = 0;
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,120);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,110);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,120); // q
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,110); // m
+        base58Prefixes[X86VM_ADDRESS]  = std::vector<unsigned char>(1,137); // x
+        base58Prefixes[TESTVM_ADDRESS] = std::vector<unsigned char>(1,127); // t
+
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};

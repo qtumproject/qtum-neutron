@@ -235,6 +235,9 @@ BASE_SCRIPTS = [
     'qtum_duplicate_stake.py',
     'qtum_rpc_bitcore.py',
     'qtum_faulty_header_chain.py',
+
+    # neutron
+    'neutron_universaladdr.py',
 ]
 
 EXTENDED_SCRIPTS = [
