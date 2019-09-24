@@ -2644,6 +2644,15 @@ bool QtumTxConverter::extractionQtumTransactions(ExtractQtumTX& qtumtx){
             if(receiveStack(txBit.vout[i].scriptPubKey)){
                 EthTransactionParams params;
                 if(parseEthTXParams(params)){
+                    if (
+                        params.version.toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
+                        params.version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw()) {
+                        if (chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight) {
+                            return false;
+                        } else {
+                            return false;
+                        }
+                    }
                     resultTX.push_back(createEthTX(params, i));
                     resultETP.push_back(params);
                 }else{
