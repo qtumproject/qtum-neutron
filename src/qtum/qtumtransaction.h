@@ -40,6 +40,22 @@ struct VersionVM{
         x.vmVersion=0;
         return x;
     }
+    static VersionVM GetNeutronX86Default() {
+        VersionVM x;
+        x.flagOptions = 0;
+        x.rootVM = 3;
+        x.format = 1;
+        x.vmVersion = 0;
+        return x;
+    }
+    static VersionVM GetNeutronTestVMDefault() {
+        VersionVM x;
+        x.flagOptions = 0;
+        x.rootVM = 4;
+        x.format = 1;
+        x.vmVersion = 0;
+        return x;
+    }
 }__attribute__((__packed__));
 
 class QtumTransaction : public dev::eth::Transaction{

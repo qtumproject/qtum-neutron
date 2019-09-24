@@ -41,6 +41,7 @@ public:
     void setData(const std::vector<unsigned char> &data);
     void setData(const unsigned char *data, size_t size);
     int setHex(const char* psz);
+    int setHex(const std::vector<unsigned char> &data);
     int setHex(const std::string &str);
 
     std::string getHex();

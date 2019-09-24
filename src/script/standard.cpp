@@ -15,6 +15,7 @@
 #include <qtum/qtumtransaction.h>
 #include <validation.h>
 #include <streams.h>
+#include <neutron/universaladdr.h>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -43,8 +44,10 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_WITNESS_UNKNOWN: return "witness_unknown";
     case TX_CREATE_SENDER: return "create_sender";
     case TX_CALL_SENDER: return "call_sender";
+    case TX_NEUTRON_CALL_SENDER: return "call_sender";
     case TX_CREATE: return "create";
     case TX_CALL: return "call";
+    case TX_NEUTRON_CALL: return "call";
     }
     return nullptr;
 }
@@ -74,11 +77,15 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
         // Call contract tx with sender
         mTemplates.insert(std::make_pair(TX_CALL_SENDER, CScript() << OP_ADDRESS_TYPE << OP_ADDRESS << OP_SCRIPT_SIG << OP_SENDER << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
 
+        mTemplates.insert(std::make_pair(TX_NEUTRON_CALL_SENDER, CScript() << OP_ADDRESS_TYPE << OP_ADDRESS << OP_SCRIPT_SIG << OP_SENDER << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_UNIVERSAL_ADDRESS << OP_CALL));
+
         // Contract creation tx
         mTemplates.insert(std::make_pair(TX_CREATE, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_CREATE));
 
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
+
+        mTemplates.insert(std::make_pair(TX_NEUTRON_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_UNIVERSAL_ADDRESS << OP_CALL));
     }
     vSolutionsRet.clear();
 
@@ -204,7 +211,10 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
                         return TX_NONSTANDARD;
 
                     version = VersionVM::fromRaw(CScriptNum::vch_to_uint64(vch1));
-                    if(!(version.toRaw() == VersionVM::GetEVMDefault().toRaw() || version.toRaw() == VersionVM::GetNoExec().toRaw())){
+                    if (version.toRaw() != VersionVM::GetNoExec().toRaw() &&
+                        version.toRaw() != VersionVM::GetEVMDefault().toRaw() &&
+                        version.toRaw() != VersionVM::GetNeutronX86Default().toRaw() &&
+                        version.toRaw() != VersionVM::GetNeutronTestVMDefault().toRaw()) {
                         // only allow standard EVM and no-exec transactions to live in mempool
                         return TX_NONSTANDARD;
                     }
@@ -264,6 +274,17 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
                 {
                     if(vch1.empty())
                         break;
+                }
+            }
+            else if (opcode2 == OP_UNIVERSAL_ADDRESS) {
+                UniversalAddress uaddr;
+                if (uaddr.setHex(vch1) != 0) {
+                    return TX_NONSTANDARD;
+                }
+                if (uaddr.version() == UniversalAddress::NX86 && version.toRaw() == VersionVM::GetNeutronX86Default().toRaw()) {
+                    vSolutionsRet.push_back(uaddr.data());
+                } else {
+                    return TX_NONSTANDARD;
                 }
             }
             else if(opcode2 == OP_ADDRESS_TYPE)

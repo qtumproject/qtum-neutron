@@ -74,8 +74,10 @@ enum txnouttype
     TX_WITNESS_UNKNOWN, //!< Only for Witness versions not already defined above
     TX_CREATE_SENDER,
     TX_CALL_SENDER,
+    TX_NEUTRON_CALL_SENDER,
     TX_CREATE,
     TX_CALL,
+    TX_NEUTRON_CALL
 };
 
 class CNoDestination {
