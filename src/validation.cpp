@@ -801,9 +801,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     txMinGasPrice = qtumTransaction.gasPrice();
                 }
                 VersionVM v = qtumTransaction.getVersion();
-                if(v.format!=0)
+                if(v.format > 1)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                if(v.rootVM != 1)
+                else if (v.format == 1 && chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight)
+                    return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
+                if(!((v.format == 0 && v.rootVM == 1) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");

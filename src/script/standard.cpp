@@ -279,9 +279,10 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
             else if (opcode2 == OP_UNIVERSAL_ADDRESS) {
                 UniversalAddress uaddr;
                 if (uaddr.setHex(vch1) != 0) {
-                    return TX_NONSTANDARD;
+                    break;
                 }
-                if (uaddr.version() == UniversalAddress::NX86 && version.toRaw() == VersionVM::GetNeutronX86Default().toRaw()) {
+                if ((uaddr.version() == UniversalAddress::NX86 && version.toRaw() == VersionVM::GetNeutronX86Default().toRaw()) ||
+                    (uaddr.version() == UniversalAddress::NTVM && version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw())) {
                     vSolutionsRet.push_back(uaddr.data());
                 } else {
                     return TX_NONSTANDARD;
