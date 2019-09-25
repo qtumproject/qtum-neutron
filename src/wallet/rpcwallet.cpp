@@ -918,16 +918,16 @@ static UniValue neutroncreatecontract(const JSONRPCRequest& request){
     }
 
     bool fHasSender=false;
-    UniversalAddress senderAddress;
+    UniversalAddress senderUniversal;
     if (request.params.size() > 4){
-        if (!ReadUniversalAddress(request.params[4].get_str(), senderAddress))
+        if (!ReadUniversalAddress(request.params[4].get_str(), senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address to send from");
-        if (!IsValidSenderUniversalAddress(senderAddress))
+        if (!IsValidSenderUniversalAddress(senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid sender address. Contract address is not allowed");
         else
             fHasSender = true;
     }
-    CTxDestination senderDest = UniversalToDestination(senderAddress);
+    CTxDestination senderDest = UniversalToDestination(senderUniversal);
 
     bool fBroadcast=true;
     if (request.params.size() > 5){
@@ -1452,16 +1452,16 @@ static UniValue neutronsendtocontract(const JSONRPCRequest& request){
 
     bool fHasSender=false;
 
-    UniversalAddress senderAddress;
+    UniversalAddress senderUniversal;
     if (request.params.size() > 5){
-        if (!ReadUniversalAddress(request.params[5].get_str(), senderAddress))
+        if (!ReadUniversalAddress(request.params[5].get_str(), senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address to send from");
-        if (!IsValidSenderUniversalAddress(senderAddress))
+        if (!IsValidSenderUniversalAddress(senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid contract sender address.");
         else
             fHasSender=true;
     }
-    CTxDestination senderDest = UniversalToDestination(senderAddress);
+    CTxDestination senderDest = UniversalToDestination(senderUniversal);
 
     bool fBroadcast=true;
     if (request.params.size() > 6){
