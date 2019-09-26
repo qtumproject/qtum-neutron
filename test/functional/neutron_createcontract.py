@@ -30,7 +30,7 @@ class NeutronCreatecontractTest(BitcoinTestFramework):
         contract_universal = ret['contractUniversal']
         assert(contract_address.startswith("t"))
         assert(contract_universal.startswith("0480"))
-        self.node.generate(1)
+        self.node.generatetoaddress(1, self.addr)
         tx = self.node.gettransaction(ret["txid"])
         assert_equal(tx['confirmations'], 1)
 
@@ -42,7 +42,7 @@ class NeutronCreatecontractTest(BitcoinTestFramework):
         contract_universal = ret['contractUniversal']
         assert(contract_address.startswith("x"))
         assert(contract_universal.startswith("0380"))
-        self.node.generate(1)
+        self.node.generatetoaddress(1, self.addr)
         tx = self.node.gettransaction(ret["txid"])
         assert_equal(tx['confirmations'], 1)
 
@@ -69,7 +69,7 @@ class NeutronCreatecontractTest(BitcoinTestFramework):
         assert_raises_rpc_error(-5, "Invalid Qtum address to send from", self.node.neutroncreatecontract, "testvm", "0000", 1000000, QTUM_MIN_GAS_PRICE_STR, "qabmqZk3re5b9UpUcznxDkCnCsnKdmPkt")
         assert_raises_rpc_error(-4, "Private key not available", self.node.neutroncreatecontract, "testvm", "0000", 1000000, QTUM_MIN_GAS_PRICE_STR, "010045837cfcb0f1ec121b105647e2cefd0bc7be48a7")
 
-        sender = self.node.getnewaddress()
+        sender = self.node.getnewaddress("", "legacy")
         senderUniversal = self.node.touniversal(sender)
 
         ret = self.node.neutroncreatecontract("testvm", "0000", 1000000, QTUM_MIN_GAS_PRICE_STR, sender)
@@ -94,7 +94,7 @@ class NeutronCreatecontractTest(BitcoinTestFramework):
         assert_raises_rpc_error(-5, "Invalid sender address. Only P2PK or P2PKH address allowed", self.node.neutroncreatecontract, "testvm", "0000", 1000000, QTUM_MIN_GAS_PRICE_STR, bech32_sender)
 
     def createcontract_no_broadcast_test(self):
-        sender = self.node.getnewaddress()
+        sender = self.node.getnewaddress("", "legacy")
         ret = self.node.neutroncreatecontract("testvm", "0000", 1000000, QTUM_MIN_GAS_PRICE_STR, sender, False)
         raw = ret["raw transaction"]
         assert_equal(len(ret.keys()), 1)
@@ -120,7 +120,8 @@ class NeutronCreatecontractTest(BitcoinTestFramework):
         assert_equal(raw, tx['hex'])
 
     def run_test(self):
-        self.nodes[0].generate(COINBASE_MATURITY+50)
+        self.addr = self.nodes[0].getnewaddress("", "legacy")
+        self.nodes[0].generatetoaddress(COINBASE_MATURITY+50, self.addr)
         self.node = self.nodes[0]
         self.createcontract_simple_test()
         self.createcontract_invalid_vmname_test()

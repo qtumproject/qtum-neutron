@@ -255,7 +255,7 @@ bool IsValidUniversalAddress(const UniversalAddress& uaddr) {
 }
 
 bool IsValidSenderUniversalAddress(const UniversalAddress& uaddr) {
-    return IsValidUniversalAddress(uaddr) && !IsContractUniversalAddress(uaddr);
+    return IsValidUniversalAddress(uaddr) && uaddr.version() == UniversalAddress::P2PKH;
 }
 
 bool IsContractUniversalAddress(const UniversalAddress& uaddr) {

@@ -923,7 +923,7 @@ static UniValue neutroncreatecontract(const JSONRPCRequest& request){
         if (!ReadUniversalAddress(request.params[4].get_str(), senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address to send from");
         if (!IsValidSenderUniversalAddress(senderUniversal))
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid sender address. Contract address is not allowed");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid sender address. Only P2PK or P2PKH address allowed");
         else
             fHasSender = true;
     }
@@ -1003,6 +1003,10 @@ static UniValue neutroncreatecontract(const JSONRPCRequest& request){
 
     if (nGasFee > curBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
+
+    // Select default coin that will pay for the contract if none selected
+    if(!coinControl.HasSelected() && !SetDefaultPayForContractAddress(pwallet, *locked_chain, coinControl))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Does not have any P2PK or P2PKH unspent outputs to pay for the contract.");
 
     // Build OP_EXEC script
     CScript scriptPubKey = CScript() << CScriptNum(vmVersion.toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(bytecode) << OP_CREATE;
@@ -1539,6 +1543,10 @@ static UniValue neutronsendtocontract(const JSONRPCRequest& request){
 
     if (nAmount+nGasFee > curBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient funds");
+
+    // Select default coin that will pay for the contract if none selected
+    if(!coinControl.HasSelected() && !SetDefaultPayForContractAddress(pwallet, *locked_chain, coinControl))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Does not have any P2PK or P2PKH unspent outputs to pay for the contract.");
 
     // Build OP_EXEC_ASSIGN script
     CScript scriptPubKey = CScript() << CScriptNum(vmVersion.toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(datahex) << ParseHex(contractAddress.getHex()) << OP_CALL;
