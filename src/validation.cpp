@@ -801,9 +801,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     txMinGasPrice = qtumTransaction.gasPrice();
                 }
                 VersionVM v = qtumTransaction.getVersion();
-                if(v.format > 1)
-                    return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                else if (v.format == 1 && chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight)
+                if (v.format > 1 || (v.format == 1 && chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
                 if(!((v.format == 0 && v.rootVM == 1) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
@@ -2646,14 +2644,10 @@ bool QtumTxConverter::extractionQtumTransactions(ExtractQtumTX& qtumtx){
             if(receiveStack(txBit.vout[i].scriptPubKey)){
                 EthTransactionParams params;
                 if(parseEthTXParams(params)){
-                    if (
-                        params.version.toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
-                        params.version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw()) {
-                        if (chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight) {
-                            return false;
-                        } else {
-                            return false;
-                        }
+                    if (chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight &&
+                        (params.version.toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
+                        params.version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw())) {
+                        return false;
                     }
                     resultTX.push_back(createEthTX(params, i));
                     resultETP.push_back(params);
