@@ -770,9 +770,9 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
             uint64_t minGasPrice = qtumDGP.getMinGasPrice(chainActive.Tip()->nHeight + 1);
             uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(chainActive.Tip()->nHeight + 1);
-            size_t count = 0;
-            for(const CTxOut& o : tx.vout)
-                count += o.scriptPubKey.HasOpCreate() || o.scriptPubKey.HasOpCall() ? 1 : 0;
+            // size_t count = 0;
+            // for(const CTxOut& o : tx.vout)
+            //     count += o.scriptPubKey.HasOpCreate() || o.scriptPubKey.HasOpCall() ? 1 : 0;
             unsigned int contractflags = GetContractScriptFlags(GetSpendHeight(view), chainparams.GetConsensus());
             QtumTxConverter converter(tx, NULL, NULL, contractflags);
             ExtractQtumTX resultConverter;
@@ -833,8 +833,8 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             if(!CheckMinGasPrice(qtumETP, minGasPrice))
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-small-gasprice");
 
-            if(count > qtumTransactions.size())
-                return state.DoS(100, false, REJECT_INVALID, "bad-txns-incorrect-format");
+            // if(count > qtumTransactions.size())
+            //     return state.DoS(100, false, REJECT_INVALID, "bad-txns-incorrect-format");
 
             if (rawTx && nAbsurdFee && dev::u256(nFees) > dev::u256(nAbsurdFee) + sumGas)
                 return state.Invalid(false,
@@ -2649,10 +2649,13 @@ bool QtumTxConverter::extractionQtumTransactions(ExtractQtumTX& qtumtx){
             if(receiveStack(txBit.vout[i].scriptPubKey)){
                 EthTransactionParams params;
                 if(parseEthTXParams(params)){
-                    if (chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight &&
-                        (params.version.toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
-                        params.version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw())) {
-                        return false;
+                    if (params.version.toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
+                        params.version.toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw()) {
+                        if (chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight) {
+                            return false;
+                        } else {
+                            continue;
+                        }
                     }
                     resultTX.push_back(createEthTX(params, i));
                     resultETP.push_back(params);
