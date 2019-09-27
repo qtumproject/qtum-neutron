@@ -2531,7 +2531,12 @@ void LastHashes::clear()
 bool ByteCodeExec::performByteCode(dev::eth::Permanence type){
     for(QtumTransaction& tx : txs){
         //validate VM version
-        if(tx.getVersion().toRaw() != VersionVM::GetEVMDefault().toRaw()){
+        if (chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight &&
+            (tx.getVersion().toRaw() == VersionVM::GetNeutronX86Default().toRaw() ||
+            tx.getVersion().toRaw() == VersionVM::GetNeutronTestVMDefault().toRaw())) {
+            continue;
+        }
+        if (tx.getVersion().toRaw() != VersionVM::GetEVMDefault().toRaw()) {
             return false;
         }
         dev::eth::EnvInfo envInfo(BuildEVMEnvironment());
@@ -3147,7 +3152,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                 }
 
                 VersionVM v = qtx.getVersion();
-                if(v.format!=0)
+                if (v.format > 1 || (v.format == 1 && pindex->nHeight < Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
                 if(v.rootVM != 0){
                     nonZeroVersion=true;
@@ -3157,7 +3162,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                         return state.DoS(100, error("ConnectBlock(): Contract tx has mixed version 0 and non-0 VM executions"), REJECT_INVALID, "bad-tx-mixed-zero-versions");
                     }
                 }
-                if(!(v.rootVM == 0 || v.rootVM == 1))
+                if (!((v.format == 0 && (v.rootVM == 0 || v.rootVM == 1)) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");
