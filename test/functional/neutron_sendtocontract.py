@@ -60,14 +60,14 @@ class NeutronSendtocontractTest(BitcoinTestFramework):
 
         # use a contract address as sender
         invalid_sender_addr = 'tVNnwt8c9HrE63mhhacDUtJ7k4v4e6W4w2'
-        assert_raises_rpc_error(-5, 'Invalid contract sender address.', self.node.neutronsendtocontract, self.contract_universal, '00', 0, 1000000, QTUM_MIN_GAS_PRICE_STR, invalid_sender_addr)
+        assert_raises_rpc_error(-5, 'Invalid sender address. Only P2PK or P2PKH address allowed', self.node.neutronsendtocontract, self.contract_universal, '00', 0, 1000000, QTUM_MIN_GAS_PRICE_STR, invalid_sender_addr)
 
         # p2sh and bech32 addresses are not allowed for now
         p2sh_sender = self.node.getnewaddress("", "p2sh-segwit")
-        assert_raises_rpc_error(-5, "Invalid contract sender address.", self.node.neutronsendtocontract, self.contract_universal, "00", 0, 1000000, QTUM_MIN_GAS_PRICE_STR, p2sh_sender)
+        assert_raises_rpc_error(-5, "Invalid sender address. Only P2PK or P2PKH address allowed", self.node.neutronsendtocontract, self.contract_universal, "00", 0, 1000000, QTUM_MIN_GAS_PRICE_STR, p2sh_sender)
 
         bech32_sender = self.node.getnewaddress("", "bech32")
-        assert_raises_rpc_error(-5, "Invalid contract sender address.", self.node.neutronsendtocontract, self.contract_universal, "00", 0, 1000000, QTUM_MIN_GAS_PRICE_STR, bech32_sender)
+        assert_raises_rpc_error(-5, "Invalid sender address. Only P2PK or P2PKH address allowed", self.node.neutronsendtocontract, self.contract_universal, "00", 0, 1000000, QTUM_MIN_GAS_PRICE_STR, bech32_sender)
 
         # invalid data
         assert_raises_rpc_error(-3, 'Invalid data (data not hex)', self.node.neutronsendtocontract, self.contract_universal, '00fg')

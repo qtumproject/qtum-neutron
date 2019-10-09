@@ -1461,7 +1461,7 @@ static UniValue neutronsendtocontract(const JSONRPCRequest& request){
         if (!ReadUniversalAddress(request.params[5].get_str(), senderUniversal))
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address to send from");
         if (!IsValidSenderUniversalAddress(senderUniversal))
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid contract sender address.");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid sender address. Only P2PK or P2PKH address allowed");
         else
             fHasSender=true;
     }
