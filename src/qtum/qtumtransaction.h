@@ -17,44 +17,68 @@ struct VersionVM{
     // CONSENSUS CRITICAL!
     // Do not add any other fields to this struct
 
-    uint32_t toRaw(){
+    static constexpr uint8_t ROOTVM_NOEXEC = 0;
+    static constexpr uint8_t ROOTVM_EVM = 1;
+    static constexpr uint8_t ROOTVM_NEUTRON_X86 = 3;
+    static constexpr uint8_t ROOTVM_NEUTRON_TESTVM = 4;
+
+    static constexpr uint8_t FORMAT_EVM = 0;
+    static constexpr uint8_t FORMAT_NEUTRON = 1;
+
+    uint32_t toRaw() const {
         return *(uint32_t*)this;
     }
+    bool isValidFormat(bool neutronHardfork) const {
+        return format == FORMAT_EVM || (neutronHardfork && format == FORMAT_NEUTRON);
+    }
+
     static VersionVM fromRaw(uint32_t val){
         VersionVM x = *(VersionVM*)&val;
         return x;
     }
     static VersionVM GetNoExec(){
         VersionVM x;
-        x.flagOptions=0;
-        x.rootVM=0;
-        x.format=0;
-        x.vmVersion=0;
+        x.flagOptions = 0;
+        x.rootVM = ROOTVM_NOEXEC;
+        x.format = FORMAT_EVM;
+        x.vmVersion = 0;
         return x;
     }
     static VersionVM GetEVMDefault(){
         VersionVM x;
-        x.flagOptions=0;
-        x.rootVM=1;
-        x.format=0;
-        x.vmVersion=0;
+        x.flagOptions = 0;
+        x.rootVM = ROOTVM_EVM;
+        x.format = FORMAT_EVM;
+        x.vmVersion = 0;
         return x;
     }
     static VersionVM GetNeutronX86Default() {
         VersionVM x;
         x.flagOptions = 0;
-        x.rootVM = 3;
-        x.format = 1;
+        x.rootVM = ROOTVM_NEUTRON_X86;
+        x.format = FORMAT_NEUTRON;
         x.vmVersion = 0;
         return x;
     }
     static VersionVM GetNeutronTestVMDefault() {
         VersionVM x;
         x.flagOptions = 0;
-        x.rootVM = 4;
-        x.format = 1;
+        x.rootVM = ROOTVM_NEUTRON_TESTVM;
+        x.format = FORMAT_NEUTRON;
         x.vmVersion = 0;
         return x;
+    }
+    bool isNoExec() const {
+        return toRaw() == GetNoExec().toRaw();
+    }
+    bool isEVM() const {
+        return toRaw() == GetEVMDefault().toRaw();
+    }
+    bool isNeutronX86() const {
+        return toRaw() == GetNeutronX86Default().toRaw();
+    }
+    bool isNeutronTestVM() const {
+        return toRaw() == GetNeutronTestVMDefault().toRaw();
     }
 }__attribute__((__packed__));
 

@@ -798,9 +798,9 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     txMinGasPrice = qtumTransaction.gasPrice();
                 }
                 VersionVM v = qtumTransaction.getVersion();
-                if (v.format > 1 || (v.format == 1 && chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight))
+                if (!v.isValidFormat(chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                if(!((v.format == 0 && v.rootVM == 1) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
+                if (!v.isEVM() && !v.isNeutronX86() && !v.isNeutronTestVM())
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");
@@ -812,7 +812,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas limit than allowed to accept into mempool"), REJECT_INVALID, "bad-tx-too-little-mempool-gas");
 
                 //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
-                if(qtumTransaction.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
+                if(qtumTransaction.gas() < MINIMUM_GAS_LIMIT && v.rootVM != VersionVM::ROOTVM_NOEXEC)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas limit than allowed"), REJECT_INVALID, "bad-tx-too-little-gas");
 
                 if(qtumTransaction.gas() > UINT32_MAX)
@@ -823,7 +823,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     return state.DoS(1, false, REJECT_INVALID, "bad-txns-gas-exceeds-blockgaslimit");
 
                 //don't allow less than DGP set minimum gas price to prevent MPoS greedy mining/spammers
-                if(v.rootVM!=0 && (uint64_t)qtumTransaction.gasPrice() < minGasPrice)
+                if(v.rootVM != VersionVM::ROOTVM_NOEXEC && (uint64_t)qtumTransaction.gasPrice() < minGasPrice)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas price than allowed"), REJECT_INVALID, "bad-tx-low-gas-price");
             }
 
@@ -3149,9 +3149,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                 }
 
                 VersionVM v = qtx.getVersion();
-                if (v.format > 1 || (v.format == 1 && pindex->nHeight < Params().GetConsensus().NeutronHeight))
+                if (!v.isValidFormat(pindex->nHeight >= Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                if(v.rootVM != 0){
+                if(v.rootVM != VersionVM::ROOTVM_NOEXEC){
                     nonZeroVersion=true;
                 }else{
                     if(nonZeroVersion){
@@ -3159,7 +3159,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                         return state.DoS(100, error("ConnectBlock(): Contract tx has mixed version 0 and non-0 VM executions"), REJECT_INVALID, "bad-tx-mixed-zero-versions");
                     }
                 }
-                if (!((v.format == 0 && (v.rootVM == 0 || v.rootVM == 1)) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
+                if (!v.isNoExec() && !v.isEVM() && !v.isNeutronX86() && !v.isNeutronTestVM())
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");
@@ -3167,7 +3167,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown flag options"), REJECT_INVALID, "bad-tx-version-flags");
 
                 //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
-                if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
+                if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != VersionVM::ROOTVM_NOEXEC)
                     return state.DoS(100, error("ConnectBlock(): Contract execution has lower gas limit than allowed"), REJECT_INVALID, "bad-tx-too-little-gas");
 
                 if(qtx.gas() > UINT32_MAX)
