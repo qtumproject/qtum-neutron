@@ -246,6 +246,9 @@ BASE_SCRIPTS = [
 
     # neutron
     'neutron_universaladdr.py',
+    'neutron_createcontract.py',
+    'neutron_sendtocontract.py',
+    'neutron_callcontract.py',
 ]
 
 EXTENDED_SCRIPTS = [
