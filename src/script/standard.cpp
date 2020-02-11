@@ -139,7 +139,7 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
         uint64_t addressType = 0;
 
         VersionVM version;
-        version.rootVM=20; //set to some invalid value
+        version.rootVM=20;//set to some invalid value
 
         // Compare
         CScript::const_iterator pc1 = script1.begin();
@@ -225,7 +225,7 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
                     uint64_t val = CScriptNum::vch_to_uint64(vch1);
                     if(contractConsensus) {
                         //consensus rules (this is checked more in depth later using DGP)
-                        if (version.rootVM != 0 && val < 1) {
+                        if (version.rootVM != VersionVM::ROOTVM_NOEXEC && val < 1) {
                             return TX_NONSTANDARD;
                         }
                         if (val > MAX_BLOCK_GAS_LIMIT_DGP) {
@@ -235,7 +235,7 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
                     }else{
                         //standard mempool rules for contracts
                         //consensus rules for contracts
-                        if (version.rootVM != 0 && val < STANDARD_MINIMUM_GAS_LIMIT) {
+                        if (version.rootVM != VersionVM::ROOTVM_NOEXEC && val < STANDARD_MINIMUM_GAS_LIMIT) {
                             return TX_NONSTANDARD;
                         }
                         if (val > DEFAULT_BLOCK_GAS_LIMIT_DGP / 2) {
@@ -254,12 +254,12 @@ txnouttype Solver(const CScript& scriptPubKey, std::vector<std::vector<unsigned 
                     uint64_t val = CScriptNum::vch_to_uint64(vch1);
                     if(contractConsensus) {
                         //consensus rules (this is checked more in depth later using DGP)
-                        if (version.rootVM != 0 && val < 1) {
+                        if (version.rootVM != VersionVM::ROOTVM_NOEXEC && val < 1) {
                             return TX_NONSTANDARD;
                         }
                     }else{
                         //standard mempool rules
-                        if (version.rootVM != 0 && val < STANDARD_MINIMUM_GAS_PRICE) {
+                        if (version.rootVM != VersionVM::ROOTVM_NOEXEC && val < STANDARD_MINIMUM_GAS_PRICE) {
                             return TX_NONSTANDARD;
                         }
                     }

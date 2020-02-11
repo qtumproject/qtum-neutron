@@ -770,9 +770,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             QtumDGP qtumDGP(globalState.get(), fGettingValuesDGP);
             uint64_t minGasPrice = qtumDGP.getMinGasPrice(chainActive.Tip()->nHeight + 1);
             uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(chainActive.Tip()->nHeight + 1);
-            // size_t count = 0;
-            // for(const CTxOut& o : tx.vout)
-            //     count += o.scriptPubKey.HasOpCreate() || o.scriptPubKey.HasOpCall() ? 1 : 0;
+          
             unsigned int contractflags = GetContractScriptFlags(GetSpendHeight(view), chainparams.GetConsensus());
             QtumTxConverter converter(tx, NULL, NULL, contractflags);
             ExtractQtumTX resultConverter;
@@ -784,7 +782,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
             dev::u256 sumGas = dev::u256(0);
             dev::u256 gasAllTxs = dev::u256(0);
-            for(QtumTransaction qtumTransaction : qtumTransactions){
+            for(const QtumTransaction& qtumTransaction : qtumTransactions){
                 sumGas += qtumTransaction.gas() * qtumTransaction.gasPrice();
 
                 if(sumGas > dev::u256(INT64_MAX)) {
@@ -801,9 +799,9 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     txMinGasPrice = qtumTransaction.gasPrice();
                 }
                 VersionVM v = qtumTransaction.getVersion();
-                if (v.format > 1 || (v.format == 1 && chainActive.Tip()->nHeight < Params().GetConsensus().NeutronHeight))
+                if (!v.isValidFormat(chainActive.Tip()->nHeight >= Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                if(!((v.format == 0 && v.rootVM == 1) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
+                if (!v.isEVM() && !v.isNeutronX86() && !v.isNeutronTestVM())
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");
@@ -815,7 +813,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas limit than allowed to accept into mempool"), REJECT_INVALID, "bad-tx-too-little-mempool-gas");
 
                 //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
-                if(qtumTransaction.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
+                if(qtumTransaction.gas() < MINIMUM_GAS_LIMIT && v.rootVM != VersionVM::ROOTVM_NOEXEC)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas limit than allowed"), REJECT_INVALID, "bad-tx-too-little-gas");
 
                 if(qtumTransaction.gas() > UINT32_MAX)
@@ -826,15 +824,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     return state.DoS(1, false, REJECT_INVALID, "bad-txns-gas-exceeds-blockgaslimit");
 
                 //don't allow less than DGP set minimum gas price to prevent MPoS greedy mining/spammers
-                if(v.rootVM!=0 && (uint64_t)qtumTransaction.gasPrice() < minGasPrice)
+                if(v.rootVM != VersionVM::ROOTVM_NOEXEC && (uint64_t)qtumTransaction.gasPrice() < minGasPrice)
                     return state.DoS(100, error("AcceptToMempool(): Contract execution has lower gas price than allowed"), REJECT_INVALID, "bad-tx-low-gas-price");
             }
 
             if(!CheckMinGasPrice(qtumETP, minGasPrice))
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-small-gasprice");
-
-            // if(count > qtumTransactions.size())
-            //     return state.DoS(100, false, REJECT_INVALID, "bad-txns-incorrect-format");
 
             if (rawTx && nAbsurdFee && dev::u256(nFees) > dev::u256(nAbsurdFee) + sumGas)
                 return state.Invalid(false,
@@ -2296,12 +2291,12 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
     dev::Address senderAddress = sender == dev::Address() ? dev::Address("ffffffffffffffffffffffffffffffffffffffff") : sender;
     tx.vout.push_back(CTxOut(0, CScript() << OP_DUP << OP_HASH160 << senderAddress.asBytes() << OP_EQUALVERIFY << OP_CHECKSIG));
     block.vtx.push_back(MakeTransactionRef(CTransaction(tx)));
- 
+
     QtumTransaction callTransaction(0, 1, dev::u256(gasLimit), addrContract, opcode, dev::u256(0));
     callTransaction.forceSender(senderAddress);
     callTransaction.setVersion(VersionVM::GetEVMDefault());
 
-    
+
     ByteCodeExec exec(block, std::vector<QtumTransaction>(1, callTransaction), blockGasLimit, pblockindex);
     exec.performByteCode(dev::eth::Permanence::Reverted);
     return exec.getResult();
@@ -2375,7 +2370,7 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
         std::vector<CScript> mposScriptList;
         if(!GetMPoSOutputScripts(mposScriptList, nPrevHeight, consensusParams))
             return error("CheckReward(): cannot create the list of MPoS output scripts");
-      
+
         for(size_t i = 0; i < mposScriptList.size(); i++){
             it=std::find(vTempVouts.begin(), vTempVouts.end(), CTxOut(splitReward,mposScriptList[i]));
             if(it==vTempVouts.end()){
@@ -2494,7 +2489,7 @@ void writeVMlog(const std::vector<ResultExecute>& res, const CTransaction& tx, c
             ss << "]}";
         }
     }
-    
+
     std::ofstream file(qtumDir.string(), std::ios::in | std::ios::out);
     file.seekp(-2, std::ios::end);
     file << ss.str();
@@ -3083,7 +3078,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         {
             if (tx.IsCoinStake())
                 nActualStakeReward = tx.GetValueOut()-view.GetValueIn(tx);
-                    
+
             std::vector<CScriptCheck> vChecks;
             bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks (still consult the cache, though) */
             //note that coinbase and coinstake can not contain any contract opcodes, this is checked in CheckBlock
@@ -3143,7 +3138,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
             bool nonZeroVersion=false;
             dev::u256 sumGas = dev::u256(0);
             CAmount nTxFee = view.GetValueIn(tx)-tx.GetValueOut();
-            for(QtumTransaction& qtx : resultConvertQtumTX.first){
+            for(const QtumTransaction& qtx : resultConvertQtumTX.first){
                 sumGas += qtx.gas() * qtx.gasPrice();
 
                 if(sumGas > dev::u256(INT64_MAX)) {
@@ -3155,9 +3150,10 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                 }
 
                 VersionVM v = qtx.getVersion();
-                if (v.format > 1 || (v.format == 1 && pindex->nHeight < Params().GetConsensus().NeutronHeight))
+
+                if (!v.isValidFormat(pindex->nHeight >= Params().GetConsensus().NeutronHeight))
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown version format"), REJECT_INVALID, "bad-tx-version-format");
-                if(v.rootVM != 0){
+                if(v.rootVM != VersionVM::ROOTVM_NOEXEC){
                     nonZeroVersion=true;
                 }else{
                     if(nonZeroVersion){
@@ -3165,7 +3161,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                         return state.DoS(100, error("ConnectBlock(): Contract tx has mixed version 0 and non-0 VM executions"), REJECT_INVALID, "bad-tx-mixed-zero-versions");
                     }
                 }
-                if (!((v.format == 0 && (v.rootVM == 0 || v.rootVM == 1)) || (v.format == 1 && (v.rootVM == 3 || v.rootVM == 4))))
+
+            
+                if (!v.isNoExec() && !v.isEVM() && !v.isNeutronX86() && !v.isNeutronTestVM())
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown root VM"), REJECT_INVALID, "bad-tx-version-rootvm");
                 if(v.vmVersion != 0)
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown VM version"), REJECT_INVALID, "bad-tx-version-vmversion");
@@ -3173,7 +3171,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                     return state.DoS(100, error("ConnectBlock(): Contract execution uses unknown flag options"), REJECT_INVALID, "bad-tx-version-flags");
 
                 //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
-                if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
+                if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != VersionVM::ROOTVM_NOEXEC)
                     return state.DoS(100, error("ConnectBlock(): Contract execution has lower gas limit than allowed"), REJECT_INVALID, "bad-tx-too-little-gas");
 
                 if(qtx.gas() > UINT32_MAX)
@@ -3188,7 +3186,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                     return state.DoS(100, error("ConnectBlock(): Contract execution has lower gas price than allowed"), REJECT_INVALID, "bad-tx-low-gas-price");
             }
 
-            if(!nonZeroVersion){
+            if(!resultConvertQtumTX.first.empty() && !nonZeroVersion){
                 //if tx is 0 version, then the tx must already have been added by a previous contract execution
                 if(!tx.HasOpSpend()){
                     return state.DoS(100, error("ConnectBlock(): Version 0 contract executions are not allowed unless created by the AAL "), REJECT_INVALID, "bad-tx-improper-version-0");
@@ -3388,7 +3386,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
             if (!pblocktree->WriteHeightIndex(e.second.first, e.second.second))
                 return AbortNode(state, "Failed to write height index");
         }
-    }    
+    }
     if(block.IsProofOfStake()){
         // Read the public key from the second output
         std::vector<unsigned char> vchPubKey;
@@ -4932,7 +4930,7 @@ bool CChainState::UpdateHashProof(const CBlock& block, CValidationState& state, 
     //reject proof of work at height consensusParams.nLastPOWBlock
     if (block.IsProofOfWork() && nHeight > consensusParams.nLastPOWBlock)
         return state.DoS(100, error("UpdateHashProof() : reject proof-of-work at height %d", nHeight));
-    
+
     // Check coinstake timestamp
     if (block.IsProofOfStake() && !CheckCoinStakeTimestamp(block.GetBlockTime()))
         return state.DoS(50, error("UpdateHashProof() : coinstake timestamp violation nTimeBlock=%d", block.GetBlockTime()));
@@ -4951,13 +4949,13 @@ bool CChainState::UpdateHashProof(const CBlock& block, CValidationState& state, 
             return error("UpdateHashProof() : check proof-of-stake failed for block %s", hash.ToString());
         }
     }
-    
+
     // PoW is checked in CheckBlock()
     if (block.IsProofOfWork())
     {
         hashProof = block.GetHash();
     }
-    
+
     // Record proof hash value
     pindex->hashProof = hashProof;
     return true;
@@ -5386,9 +5384,9 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 
     dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
-    
+
     if (!g_chainstate.ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true)){
-        
+
         globalState->setRoot(oldHashStateRoot); // qtum
         globalState->setRootUTXO(oldHashUTXORoot); // qtum
         pstorageresult->clearCacheResult();
