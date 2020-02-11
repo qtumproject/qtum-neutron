@@ -85,7 +85,10 @@ int UniversalAddress::setHex(const char *psz) {
         data.push_back(p);
     }
     std::reverse(data.begin(), data.end());
+    return setHex(data);
+}
 
+int UniversalAddress::setHex(const std::vector<unsigned char> &data) {
     size_t dataSize = data.size() -2 ;
     if (dataSize < 2) {
         return -1;
